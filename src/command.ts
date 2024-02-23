@@ -55,6 +55,30 @@ export class Command {
     });
 
     const data = await response.json();
+    if (data?.application_commands && data?.application_commands.length > 0) {
+      data.application_commands.forEach((command: any) => {
+        const name = getCommandName(command.name);
+        if (name) {
+          this.cache[name] = command;
+        }
+      });
+    } else {
+      this.allCommandV2();
+    }
+  }
+
+  async allCommandV2() {
+    const searchParams = new URLSearchParams({
+      type: "1",
+      include_applications: "true",
+    });
+    const url = `${this.config.DiscordBaseUrl}/api/v9/guilds/${this.config.ServerId}/application-command-index`;
+
+    const response = await this.config.fetch(url, {
+      headers: { authorization: this.config.SalaiToken },
+    });
+
+    const data = await response.json();
     if (data?.application_commands) {
       data.application_commands.forEach((command: any) => {
         const name = getCommandName(command.name);
@@ -62,6 +86,8 @@ export class Command {
           this.cache[name] = command;
         }
       });
+    } else {
+      throw new Error(`Failed to get application_commands for command ${name}`);
     }
   }
 
